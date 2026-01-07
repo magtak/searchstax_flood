@@ -22,7 +22,6 @@ class SearchStaxFloodSubscriber implements EventSubscriberInterface {
 
   public static function getSubscribedEvents() {
     return [
-      // Use the string name directly to bypass constant version issues
       'search_api.processing_query' => 'onQuery',
       'search_api.indexing_items' => 'onIndex',
     ];
@@ -49,8 +48,7 @@ class SearchStaxFloodSubscriber implements EventSubscriberInterface {
     $server = $index->getServerInstance();
 
     // Check if the server uses the SearchStax backend.
-    if ($server && $server->getBackendId() === 'searchstax_solr') {
-      $limit = $this->config->get($type . '_limit');
+    if (isset($configuration['connector']) && $configuration['connector'] === 'searchstax') {      $limit = $this->config->get($type . '_limit');
       $window = $this->config->get($type . '_window');
 
       if (!$this->flood->isAllowed('searchstax_flood.' . $type, $limit, $window)) {
