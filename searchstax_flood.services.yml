@@ -1,0 +1,6 @@
+services:
+  searchstax_flood.subscriber:
+    class: Drupal\searchstax_flood\EventSubscriber\SearchStaxFloodSubscriber
+    arguments: ['@config.factory', '@flood']
+    tags:
+      - { name: event_subscriber }

@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file
+ * Install functions for SearchStax Flood.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function searchstax_flood_install() {
+  \Drupal::configFactory()->getEditable('searchstax_flood.settings')
+    ->set('select_limit', 50)
+    ->set('select_window', 10)
+    ->set('update_limit', 50)
+    ->set('update_window', 60)
+    ->save();
+}

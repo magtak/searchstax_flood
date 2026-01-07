@@ -1,0 +1,7 @@
+name: 'SearchStax Flood Control'
+type: module
+description: 'Provides flood protection for SearchStax Solr queries.'
+core_version_requirement: ^9 || ^10 || ^11
+package: SearchStax
+dependencies:
+  - searchstax:searchstax

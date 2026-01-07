@@ -1,0 +1,33 @@
+<?php
+
+use Drupal\search_api\Query\QueryInterface;
+
+/**
+ * Implements hook_search_api_query_alter().
+ */
+function searchstax_flood_search_api_query_alter(QueryInterface $query) {
+  $config = \Drupal::config('searchstax_flood.settings');
+  if (!$config->get('status')) {
+    return;
+  }
+
+  // 1. Identify if this query belongs to a SearchStax-based server.
+  $server = $query->getIndex()->getServerInstance();
+  
+  // Replace 'searchstax_solr' with your actual backend plugin ID.
+  if ($server->getBackendId() === 'searchstax_solr') {
+    
+    $flood = \Drupal::flood();
+    $limit = $config->get('select_limit');
+    $window = $config->get('select_window');
+    
+    // 2. Check flood using the core service.
+    if (!$flood->isAllowed('searchstax_flood.select', $limit, $window)) {
+      // Throwing an exception here stops the query from hitting Solr.
+      throw new \Drupal\search_api\SearchApiException('Rate limit exceeded for SearchStax.');
+    }
+
+    // 3. Register the event.
+    $flood->register('searchstax_flood.select', $window);
+  }
+}
