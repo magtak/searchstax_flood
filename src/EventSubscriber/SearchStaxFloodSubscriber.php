@@ -22,8 +22,9 @@ class SearchStaxFloodSubscriber implements EventSubscriberInterface {
 
   public static function getSubscribedEvents() {
     return [
-      SearchApiEvents::PROCESSING_QUERY => 'onQuery',
-      SearchApiEvents::INDEXING_ITEMS => 'onIndex',
+      // Use the string name directly to bypass constant version issues
+      'search_api.processing_query' => 'onQuery',
+      'search_api.indexing_items' => 'onIndex',
     ];
   }
 
