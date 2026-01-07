@@ -6,9 +6,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\search_api\Event\SearchApiEvents;
 use Drupal\search_api\Event\ProcessingQueryEvent;
 use Drupal\search_api\Event\IndexingItemsEvent;
+use Drupal\search_api\SearchApiException;
+use Drupal\search_api_solr\SolrBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Flood\FloodInterface;
-use Drupal\search_api\SearchApiException;
 
 class SearchStaxFloodSubscriber implements EventSubscriberInterface {
 
@@ -22,40 +23,45 @@ class SearchStaxFloodSubscriber implements EventSubscriberInterface {
 
   public static function getSubscribedEvents() {
     return [
+      // Using string names to avoid 'Undefined Constant' errors across versions.
       'search_api.processing_query' => 'onQuery',
       'search_api.indexing_items' => 'onIndex',
     ];
   }
 
-  /**
-   * Identifies an outbound Search (Select) request.
-   */
   public function onQuery(ProcessingQueryEvent $event) {
     $this->executeCheck($event->getQuery()->getIndex(), 'select');
   }
 
-  /**
-   * Identifies an outbound Indexing (Update) request.
-   */
   public function onIndex(IndexingItemsEvent $event) {
     $this->executeCheck($event->getIndex(), 'update');
   }
 
-  /**
-   * Unified logic to block based on Server Backend ID.
-   */
   protected function executeCheck($index, $type) {
     $server = $index->getServerInstance();
+    if (!$server) {
+      return;
+    }
 
-    // Check if the server uses the SearchStax backend.
-    if (isset($configuration['connector']) && $configuration['connector'] === 'searchstax') {      $limit = $this->config->get($type . '_limit');
-      $window = $this->config->get($type . '_window');
+    $backend = $server->getBackend();
 
-      if (!$this->flood->isAllowed('searchstax_flood.' . $type, $limit, $window)) {
-        throw new SearchApiException("SearchStax flood protection: $type limit reached.");
+    // 1. Ensure this is a Solr-based server.
+    if ($backend instanceof SolrBackendInterface) {
+      $configuration = $backend->getConfiguration();
+
+      // 2. Identify specifically by the 'searchstax' connector.
+      // This matches your drush php-eval result.
+      if (isset($configuration['connector']) && $configuration['connector'] === 'searchstax') {
+        
+        $limit = $this->config->get($type . '_limit');
+        $window = $this->config->get($type . '_window');
+
+        if (!$this->flood->isAllowed('searchstax_flood.' . $type, $limit, $window)) {
+          throw new SearchApiException("SearchStax flood protection: $type limit reached.");
+        }
+
+        $this->flood->register('searchstax_flood.' . $type, $window);
       }
-
-      $this->flood->register('searchstax_flood.' . $type, $window);
     }
   }
 }
