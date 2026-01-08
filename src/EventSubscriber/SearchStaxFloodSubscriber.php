@@ -47,12 +47,9 @@ class SearchStaxFloodSubscriber implements EventSubscriberInterface {
 
     $backend = $server->getBackend();
 
-    // 1. Ensure this is a Solr-based server.
     if ($backend instanceof SolrBackendInterface) {
       $configuration = $backend->getConfiguration();
 
-      // 2. Identify specifically by the 'searchstax' connector.
-      // This matches your drush php-eval result.
       if (isset($configuration['connector']) && $configuration['connector'] === 'searchstax') {
         
         $limit = $this->config->get($type . '_limit');
