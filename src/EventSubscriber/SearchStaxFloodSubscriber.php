@@ -4,7 +4,7 @@ namespace Drupal\searchstax_flood\EventSubscriber;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Drupal\search_api\Event\SearchApiEvents;
-use Drupal\search_api\Event\ProcessingQueryEvent;
+use Drupal\search_api\Event\QueryPreExecuteEvent;
 use Drupal\search_api\Event\IndexingItemsEvent;
 use Drupal\search_api\SearchApiException;
 use Drupal\search_api_solr\SolrBackendInterface;
@@ -21,15 +21,17 @@ class SearchStaxFloodSubscriber implements EventSubscriberInterface {
     $this->flood = $flood;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public static function getSubscribedEvents() {
     return [
-      // Using string names to avoid 'Undefined Constant' errors across versions.
-      'search_api.processing_query' => 'onQuery',
-      'search_api.indexing_items' => 'onIndex',
+      SearchApiEvents::QUERY_PRE_EXECUTE => 'onQuery',
+      SearchApiEvents::INDEXING_ITEMS => 'onIndex',
     ];
   }
 
-  public function onQuery(ProcessingQueryEvent $event) {
+  public function onQuery(QueryPreExecuteEvent $event) {
     $this->executeCheck($event->getQuery()->getIndex(), 'select');
   }
 
